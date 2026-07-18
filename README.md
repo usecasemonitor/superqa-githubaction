@@ -14,15 +14,16 @@ Execute SuperQA test suites directly in your CI/CD pipeline with seamless integr
 | Input | Description | Required | Default |
 |-------|-------------|----------|---------|
 | `api_key` | SuperQA API key (must start with `az-`) | ✅ | - |
-| `project_name` | Project name | ✅ | - |
-| `test_run_name` | Test run name | ✅ | - |
+| `project_name` | SuperQA project name | ✅ | - |
+| `test_plan_name` | Test plan name | ✅ | - |
+| `test_run_name` | Deprecated alias for `test_plan_name` | ❌ | - |
 | `base_url` | SuperQA base URL | ❌ | `https://app.superqa.ai` |
 
 ## Outputs
 
 | Output | Description |
 |--------|-------------|
-| `test_result` | Test execution result (`success` or `failure`) |
+| `test_result` | `initiated` when execution starts, `failure` on error |
 
 ## Usage
 
@@ -49,7 +50,7 @@ jobs:
         with:
           api_key: ${{ secrets.SUPERQA_API_KEY }}
           project_name: 'MyProject'
-          test_run_name: 'ci-tests'
+          test_plan_name: 'ci-test-plan'
 ```
 
 ### Custom Base URL
@@ -60,7 +61,7 @@ jobs:
   with:
     api_key: ${{ secrets.SUPERQA_API_KEY }}
     project_name: 'MyProject'
-    test_run_name: 'ci-tests'
+    test_plan_name: 'ci-tests'
     base_url: 'https://custom.superqa.ai'
 ```
 
@@ -89,7 +90,7 @@ jobs:
         with:
           api_key: ${{ secrets.SUPERQA_API_KEY }}
           project_name: 'MyApp'
-          test_run_name: ${{ matrix.test_suite }}
+          test_plan_name: ${{ matrix.test_suite }}
 ```
 
 ## Setup

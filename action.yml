@@ -1,29 +1,32 @@
 name: 'SuperQA'
-description: 'Execute SuperQA test suites in your CI/CD pipeline'
+description: 'Execute SuperQA test plans in your CI/CD pipeline'
 author: 'SuperQA Team'
 
 inputs:
   api_key:
     description: 'SuperQA API key (must start with az-)'
     required: true
-  
+
   project_name:
-    description: 'Project name'
+    description: 'SuperQA project name'
+    required: true
+
+  test_plan_name:
+    description: 'Test plan name'
     required: false
-  
+
   test_run_name:
-    description: 'Test run name'
+    description: 'Deprecated alias for test_plan_name'
     required: false
-  
+
   base_url:
     description: 'SuperQA base URL'
     required: false
     default: 'https://app.superqa.ai'
 
-
 outputs:
   test_result:
-    description: 'Test execution result (success/failure)'
+    description: 'Test execution result (initiated or failure)'
 
 runs:
   using: 'docker'
@@ -35,7 +38,7 @@ runs:
     - ${{ inputs.api_key }}
     - '--base-url'
     - ${{ inputs.base_url }}
-    - ${{ inputs.project_name && '--project-name' || '' }}
+    - '--project-name'
     - ${{ inputs.project_name }}
-    - ${{ inputs.test_run_name && '--test-run-name' || '' }}
-    - ${{ inputs.test_run_name }}
+    - '--test-plan-name'
+    - ${{ inputs.test_plan_name || inputs.test_run_name }}
