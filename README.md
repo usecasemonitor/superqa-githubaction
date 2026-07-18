@@ -17,6 +17,12 @@ Execute SuperQA test suites directly in your CI/CD pipeline with seamless integr
 | `project_name` | SuperQA project name | ✅ | - |
 | `test_plan_name` | Test plan name | ✅ | - |
 | `test_run_name` | Deprecated alias for `test_plan_name` | ❌ | - |
+| `environment_name` | SuperQA environment (`production`, `staging`, etc.) | ❌ | server `default` |
+| `parallel_run` | `true` or `false` | ❌ | `false` |
+| `notification_json` | Full notification object (JSON string) | ❌ | test plan default |
+| `notification_emails` | Comma-separated failure alert emails | ❌ | - |
+| `notify_on_success` | `true` or `false` | ❌ | `false` |
+| `skip_notifications` | `true` to disable all alerts | ❌ | `false` |
 | `base_url` | SuperQA base URL | ❌ | `https://app.superqa.ai` |
 
 ## Outputs

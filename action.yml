@@ -19,6 +19,36 @@ inputs:
     description: 'Deprecated alias for test_plan_name'
     required: false
 
+  environment_name:
+    description: 'SuperQA project environment (e.g. production, staging). Defaults to default on the server.'
+    required: false
+    default: ''
+
+  parallel_run:
+    description: 'Run test cases in parallel (true/false)'
+    required: false
+    default: 'false'
+
+  notification_json:
+    description: 'Optional notification JSON (same shape as execute-now API / UI step 2)'
+    required: false
+    default: ''
+
+  notification_emails:
+    description: 'Comma-separated emails for failure alerts'
+    required: false
+    default: ''
+
+  notify_on_success:
+    description: 'Also notify when execution succeeds (true/false)'
+    required: false
+    default: 'false'
+
+  skip_notifications:
+    description: 'Skip all execution notifications (true/false)'
+    required: false
+    default: 'false'
+
   base_url:
     description: 'SuperQA base URL'
     required: false
@@ -31,6 +61,13 @@ outputs:
 runs:
   using: 'docker'
   image: 'Dockerfile'
+  env:
+    SUPERQA_ENVIRONMENT_NAME: ${{ inputs.environment_name }}
+    SUPERQA_PARALLEL_RUN: ${{ inputs.parallel_run }}
+    SUPERQA_NOTIFICATION_JSON: ${{ inputs.notification_json }}
+    SUPERQA_NOTIFICATION_EMAILS: ${{ inputs.notification_emails }}
+    SUPERQA_NOTIFY_ON_SUCCESS: ${{ inputs.notify_on_success }}
+    SUPERQA_SKIP_NOTIFICATIONS: ${{ inputs.skip_notifications }}
   args:
     - '-m'
     - 'superqa.cli'
