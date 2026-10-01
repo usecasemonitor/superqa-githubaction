@@ -29,6 +29,21 @@ inputs:
     required: false
     default: 'false'
 
+  wait_for_result:
+    description: 'Wait for a reconciled final result (requires backend /api/execute-now/result). Legacy default only initiates execution.'
+    required: false
+    default: 'false'
+
+  timeout_seconds:
+    description: 'Overall timeout when waiting for the final result'
+    required: false
+    default: '1800'
+
+  poll_interval_seconds:
+    description: 'Polling interval when waiting for the final result'
+    required: false
+    default: '5'
+
   notification_json:
     description: 'Optional notification JSON (same shape as execute-now API / UI step 2)'
     required: false
@@ -56,12 +71,26 @@ inputs:
 
 outputs:
   test_result:
-    description: 'Test execution result (initiated or failure)'
+    description: 'initiated in legacy mode; passed, failed, blocked, infrastructure_failed, timed_out, or failure in wait mode'
+  schedule_id:
+    description: 'Created execution schedule ID (wait mode)'
+  run_history_id:
+    description: 'Exact execution history ID (wait mode)'
+  report_url:
+    description: 'Detailed SuperQA execution report URL (wait mode)'
+  passed_count:
+    description: 'Passed test cases (wait mode)'
+  failed_count:
+    description: 'Failed test cases (wait mode)'
 
 runs:
   using: 'docker'
   image: 'Dockerfile'
   env:
+    SUPERQA_API_KEY: ${{ inputs.api_key }}
+    SUPERQA_WAIT_FOR_RESULT: ${{ inputs.wait_for_result }}
+    SUPERQA_RESULT_TIMEOUT_SECONDS: ${{ inputs.timeout_seconds }}
+    SUPERQA_POLL_INTERVAL_SECONDS: ${{ inputs.poll_interval_seconds }}
     SUPERQA_ENVIRONMENT_NAME: ${{ inputs.environment_name }}
     SUPERQA_PARALLEL_RUN: ${{ inputs.parallel_run }}
     SUPERQA_NOTIFICATION_JSON: ${{ inputs.notification_json }}
@@ -71,8 +100,6 @@ runs:
   args:
     - '-m'
     - 'superqa.cli'
-    - '--api-key'
-    - ${{ inputs.api_key }}
     - '--base-url'
     - ${{ inputs.base_url }}
     - '--project-name'
