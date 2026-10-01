@@ -27,6 +27,49 @@ Execute SuperQA test suites directly in your CI/CD pipeline with seamless integr
 
 ## Outputs
 
+### Optional final-result monitoring
+
+The default remains initiation-only for existing workflows. To wait for actual
+test results, enable `wait_for_result` against a backend that provides
+`GET /api/execute-now/result/:scheduleId`:
+
+```yaml
+- name: Run SuperQA and wait
+  uses: superqa-ai/superqa-githubaction@<reviewed-commit-sha>
+  timeout-minutes: 35
+  with:
+    api_key: ${{ secrets.SUPERQA_API_KEY }}
+    project_name: MyProject
+    test_plan_name: ci-test-plan
+    environment_name: staging
+    wait_for_result: 'true'
+    timeout_seconds: '1800'
+    poll_interval_seconds: '5'
+```
+
+Waiting returns exit code zero only for a complete passing selection. Failures,
+warnings, skipped or blocked coverage, API errors, interruption and timeouts
+return nonzero. Older backends fail explicitly in wait mode; the adapter does
+not interpret initiation as a passing result. A monitoring timeout does not
+cancel the external execution.
+
+Additional inputs are `wait_for_result` (default `false`), `timeout_seconds`
+(default `1800`, range 1–86400), and `poll_interval_seconds` (default `5`, range
+1–60). Set the GitHub job/step timeout longer than the monitoring deadline.
+
+Wait-mode outputs are `schedule_id`, `run_history_id`, `report_url`,
+`passed_count`, `failed_count`, and `test_result` (`passed`, `failed`, `blocked`,
+`infrastructure_failed`, `timed_out`, or `failure`). A job summary links to the
+execution report. These outputs supplement the legacy `test_result=initiated`.
+
+The result endpoint deliberately blocks schedules with multiple execution
+attempts. This Action creates a new immediate schedule for each invocation.
+
+This is the execution foundation for Phase 3. PR synchronization, impact
+selection, generated-test approval and the `protect` mode are not yet available.
+The existing engine callback authentication also needs hardening before this
+is enabled as a required branch-protection check.
+
 | Output | Description |
 |--------|-------------|
 | `test_result` | `initiated` when execution starts, `failure` on error |
@@ -151,4 +194,4 @@ This GitHub Action is released under the [MIT License](LICENSE).
 
 ---
 
-**Made with ❤️ by the SuperQA Team** 
+**Made with ❤️ by the SuperQA Team**
