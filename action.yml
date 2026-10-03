@@ -95,6 +95,8 @@ outputs:
     description: 'Passed tests (protect mode)'
   failed_tests:
     description: 'Failed tests (protect mode)'
+  error_message:
+    description: 'Sanitized backend diagnostic when Protect cannot start or complete execution'
 
 runs:
   using: 'docker'

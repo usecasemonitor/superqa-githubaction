@@ -100,9 +100,15 @@ No checkout or GitHub token input is required. Repository secrets are normally
 unavailable to fork PRs. Do not use `pull_request_target` merely to expose the
 API key to untrusted pull-request code.
 
+Protect failures include a sanitized `error_message` output and print the same
+diagnostic in the Action log. `report_url` is empty when execution failed
+before an execution history was created.
+
 | Output | Description |
 |--------|-------------|
-| `test_result` | `initiated` when execution starts, `failure` on error |
+| `test_result` | Protect result (`passed`, `failed`, `review_required`, or `execution_error`) |
+| `error_message` | Backend diagnostic for a Protect execution error |
+| `report_url` | Execution report URL, when an execution history exists |
 
 ## Usage
 

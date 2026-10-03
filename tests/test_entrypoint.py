@@ -152,6 +152,13 @@ class EntrypointTests(unittest.TestCase):
                     entrypoint.write_output('test_result', 'passed\nforged=true')
                 self.assertEqual(entrypoint.safe_report_url('javascript:alert(1)'), '')
 
+    def test_backend_error_is_safe_for_logs_and_outputs(self):
+        self.assertEqual(
+            entrypoint.safe_error_message('Execution failed\r\n::set-output name=x::forged\x00'),
+            'Execution failed ::set-output name=x::forged'
+        )
+        self.assertEqual(len(entrypoint.safe_error_message('x' * 600)), 500)
+
 
 if __name__ == '__main__':
     unittest.main()

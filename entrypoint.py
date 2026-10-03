@@ -41,6 +41,11 @@ def safe_report_url(value):
                      and not re.search(r'[\s<>\[\]()]', value)) else ''
 
 
+def safe_error_message(value):
+    """Make a backend diagnostic safe for a single GitHub output/log line."""
+    return re.sub(r'[\x00-\x1f\x7f]+', ' ', str(value or '')).strip()[:500]
+
+
 def publish_result(data):
     status = data['status']
     counts = data.get('counts') or {}
@@ -116,7 +121,9 @@ def run_protect_mode(clock=time.monotonic, sleep=time.sleep):
         data = {'result': 'timed_out', 'status': 'timed_out', 'counts': {}}
     counts = data.get('counts') or {}
     result_name = data.get('result') or 'execution_error'
+    error_message = safe_error_message(data.get('error'))
     write_output('test_result', result_name)
+    write_output('error_message', error_message)
     write_output('test_run_id', data.get('testRunId'))
     write_output('run_history_id', data.get('testRunId'))
     write_output('report_url', safe_report_url(data.get('reportUrl')))
@@ -133,6 +140,9 @@ def run_protect_mode(clock=time.monotonic, sleep=time.sleep):
             report_url = safe_report_url(data.get('reportUrl'))
             if report_url:
                 summary.write(f'[View SuperQA release report]({report_url})\n')
+    if result_name == 'execution_error':
+        detail = error_message or 'The backend did not provide an error message.'
+        print(f'SuperQA Protect execution error: {detail}', flush=True)
     return 0 if result_name == 'passed' else 1
 
 
