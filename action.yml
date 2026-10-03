@@ -9,7 +9,12 @@ inputs:
 
   project_name:
     description: 'SuperQA project name'
-    required: true
+    required: false
+
+  mode:
+    description: 'Execution mode: run-plan or protect'
+    required: false
+    default: 'run-plan'
 
   test_plan_name:
     description: 'Test plan name'
@@ -82,12 +87,21 @@ outputs:
     description: 'Passed test cases (wait mode)'
   failed_count:
     description: 'Failed test cases (wait mode)'
+  protect_run_id:
+    description: 'Protect run ID (protect mode)'
+  test_run_id:
+    description: 'Execution history ID (protect mode)'
+  passed_tests:
+    description: 'Passed tests (protect mode)'
+  failed_tests:
+    description: 'Failed tests (protect mode)'
 
 runs:
   using: 'docker'
   image: 'Dockerfile'
   env:
     SUPERQA_API_KEY: ${{ inputs.api_key }}
+    SUPERQA_MODE: ${{ inputs.mode }}
     SUPERQA_WAIT_FOR_RESULT: ${{ inputs.wait_for_result }}
     SUPERQA_RESULT_TIMEOUT_SECONDS: ${{ inputs.timeout_seconds }}
     SUPERQA_POLL_INTERVAL_SECONDS: ${{ inputs.poll_interval_seconds }}
@@ -97,6 +111,7 @@ runs:
     SUPERQA_NOTIFICATION_EMAILS: ${{ inputs.notification_emails }}
     SUPERQA_NOTIFY_ON_SUCCESS: ${{ inputs.notify_on_success }}
     SUPERQA_SKIP_NOTIFICATIONS: ${{ inputs.skip_notifications }}
+    SUPERQA_BASE_URL: ${{ inputs.base_url }}
   args:
     - '-m'
     - 'superqa.cli'

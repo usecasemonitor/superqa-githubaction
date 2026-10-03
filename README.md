@@ -14,8 +14,9 @@ Execute SuperQA test suites directly in your CI/CD pipeline with seamless integr
 | Input | Description | Required | Default |
 |-------|-------------|----------|---------|
 | `api_key` | SuperQA API key (must start with `az-`) | ✅ | - |
-| `project_name` | SuperQA project name | ✅ | - |
-| `test_plan_name` | Test plan name | ✅ | - |
+| `mode` | `run-plan` or `protect` | ❌ | `run-plan` |
+| `project_name` | SuperQA project name (`run-plan` mode) | ❌ | - |
+| `test_plan_name` | Test plan name (`run-plan` mode) | ❌ | - |
 | `test_run_name` | Deprecated alias for `test_plan_name` | ❌ | - |
 | `environment_name` | SuperQA environment (`production`, `staging`, etc.) | ❌ | server `default` |
 | `parallel_run` | `true` or `false` | ❌ | `false` |
@@ -65,10 +66,39 @@ execution report. These outputs supplement the legacy `test_result=initiated`.
 The result endpoint deliberately blocks schedules with multiple execution
 attempts. This Action creates a new immediate schedule for each invocation.
 
-This is the execution foundation for Phase 3. PR synchronization, impact
-selection, generated-test approval and the `protect` mode are not yet available.
-The existing engine callback authentication also needs hardening before this
-is enabled as a required branch-protection check.
+### Protect mode
+
+Connect the repository to a project in SuperQA Settings, add the
+`SUPERQA_API_KEY` repository secret, and create this workflow:
+
+```yaml
+name: SuperQA Protect
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+permissions:
+  contents: read
+  pull-requests: read
+
+jobs:
+  superqa-protect:
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    steps:
+      - name: Analyze changes and run affected tests
+        uses: superqa-ai/superqa-githubaction@v1
+        with:
+          api_key: ${{ secrets.SUPERQA_API_KEY }}
+          mode: protect
+```
+
+The Action reads PR metadata from GitHub's event file. The backend retrieves
+the diff through the repository-scoped GitHub connection stored in SuperQA.
+No checkout or GitHub token input is required. Repository secrets are normally
+unavailable to fork PRs. Do not use `pull_request_target` merely to expose the
+API key to untrusted pull-request code.
 
 | Output | Description |
 |--------|-------------|

@@ -1,11 +1,14 @@
 """Backward-compatible adapter around the installed CLI; no execution engine."""
 import argparse
+import json
 import os
 import re
 import runpy
 import sys
 import time
 from urllib.parse import urlparse
+
+import requests
 
 
 def write_output(name, value):
@@ -54,6 +57,83 @@ def publish_result(data):
                           f"blocked: {counts.get('blocked', 0)}; pending: {counts.get('pending', 0)}.\n\n")
             if report_url:
                 summary.write(f'[View SuperQA execution]({report_url})\n')
+
+
+def github_pr_context():
+    event_path = os.environ.get('GITHUB_EVENT_PATH', '')
+    if not event_path:
+        raise ValueError('GITHUB_EVENT_PATH is unavailable')
+    with open(event_path, encoding='utf-8') as event_file:
+        event = json.load(event_file)
+    pull_request = event.get('pull_request') or {}
+    repository = (event.get('repository') or {}).get('full_name') or os.environ.get('GITHUB_REPOSITORY')
+    number = event.get('number')
+    base = pull_request.get('base') or {}
+    head = pull_request.get('head') or {}
+    if not repository or not isinstance(number, int) or not base.get('sha') or not head.get('sha'):
+        raise ValueError('Protect mode requires a pull_request event')
+    return {
+        'repository': repository, 'prNumber': number,
+        'baseBranch': (base.get('ref') or '')[:500], 'headBranch': (head.get('ref') or '')[:500],
+        'baseSha': base['sha'], 'headSha': head['sha'],
+        'workflowRunId': os.environ.get('GITHUB_RUN_ID', '')
+    }
+
+
+def run_protect_mode(clock=time.monotonic, sleep=time.sleep):
+    api_key = os.environ.get('SUPERQA_API_KEY', '')
+    if not api_key.startswith('az-'):
+        raise ValueError('Valid SuperQA API key required')
+    base_url = os.environ.get('SUPERQA_BASE_URL', 'https://app.superqa.ai').rstrip('/')
+    parsed = urlparse(base_url)
+    if parsed.scheme not in ('http', 'https') or not parsed.netloc:
+        raise ValueError('Invalid SuperQA base URL')
+    timeout = integer_env('SUPERQA_RESULT_TIMEOUT_SECONDS', 1800, 1, 86400)
+    interval = integer_env('SUPERQA_POLL_INTERVAL_SECONDS', 5, 1, 60)
+    headers = {'Authorization': f'Bearer {api_key}', 'Content-Type': 'application/json'}
+    context = github_pr_context()
+    response = requests.post(f'{base_url}/api/protect/runs', headers=headers,
+                             json=context, timeout=min(30, timeout))
+    response.raise_for_status()
+    payload = response.json()
+    run_id = str((payload.get('data') or {}).get('protectRunId') or '')
+    if not re.fullmatch(r'[a-fA-F0-9]{24}', run_id):
+        raise ValueError('Backend did not return a valid Protect run')
+    write_output('protect_run_id', run_id)
+    deadline = clock() + timeout
+    data = None
+    while clock() < deadline:
+        result = requests.get(f'{base_url}/api/protect/runs/{run_id}', headers=headers,
+                              timeout=max(0.1, min(30, deadline - clock())))
+        result.raise_for_status()
+        data = (result.json().get('data') or {})
+        if data.get('protectRunId') != run_id or data.get('commitSha') != context['headSha']:
+            raise ValueError('Protect result does not belong to this commit')
+        if data.get('terminal') is True:
+            break
+        sleep(min(interval, max(0, deadline - clock())))
+    else:
+        data = {'result': 'timed_out', 'status': 'timed_out', 'counts': {}}
+    counts = data.get('counts') or {}
+    result_name = data.get('result') or 'execution_error'
+    write_output('test_result', result_name)
+    write_output('test_run_id', data.get('testRunId'))
+    write_output('run_history_id', data.get('testRunId'))
+    write_output('report_url', safe_report_url(data.get('reportUrl')))
+    write_output('passed_tests', counts.get('passed', 0))
+    write_output('failed_tests', counts.get('failed', 0))
+    write_output('passed_count', counts.get('passed', 0))
+    write_output('failed_count', counts.get('failed', 0))
+    if os.environ.get('GITHUB_STEP_SUMMARY'):
+        with open(os.environ['GITHUB_STEP_SUMMARY'], 'a', encoding='utf-8') as summary:
+            summary.write(f"## SuperQA Protect\n\nPR: **#{data.get('prNumber', '')}**  \n")
+            summary.write(f"Commit: `{str(data.get('commitSha', ''))[:12]}`  \nResult: **{result_name}**\n\n")
+            features = ', '.join(data.get('affectedFeatures') or []) or 'Review required'
+            summary.write(f"Affected features: {features}\n\nPassed: {counts.get('passed', 0)}; failed: {counts.get('failed', 0)}.\n\n")
+            report_url = safe_report_url(data.get('reportUrl'))
+            if report_url:
+                summary.write(f'[View SuperQA release report]({report_url})\n')
+    return 0 if result_name == 'passed' else 1
 
 
 def poll_result(client, schedule_id, deadline, interval, clock=time.monotonic, sleep=time.sleep):
@@ -160,6 +240,11 @@ def main():
     if arguments[:2] == ['-m', 'superqa.cli']:
         arguments = arguments[2:]
     try:
+        mode = os.environ.get('SUPERQA_MODE', 'run-plan').strip().lower()
+        if mode not in ('run-plan', 'protect'):
+            raise ValueError('SUPERQA_MODE must be run-plan or protect')
+        if mode == 'protect':
+            return run_protect_mode()
         if not boolean_env('SUPERQA_WAIT_FOR_RESULT'):
             # Preserve installed CLI options, output and initiation-only behavior.
             sys.argv = ['superqa.cli', *arguments]

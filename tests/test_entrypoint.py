@@ -3,6 +3,7 @@ import os
 from pathlib import Path
 import sys
 import tempfile
+import json
 import types
 import unittest
 from unittest.mock import patch
@@ -37,6 +38,25 @@ class Client:
 
 
 class EntrypointTests(unittest.TestCase):
+    def test_collects_pull_request_context_from_github_event(self):
+        with tempfile.TemporaryDirectory() as directory:
+            event = Path(directory) / 'event.json'
+            event.write_text(json.dumps({'number': 1847, 'repository': {'full_name': 'company/demo-shop'},
+                'pull_request': {'base': {'ref': 'main', 'sha': 'a' * 40},
+                                 'head': {'ref': 'feature/payment', 'sha': 'b' * 40}}}))
+            with patch.dict(os.environ, {'GITHUB_EVENT_PATH': str(event), 'GITHUB_RUN_ID': '123'}, clear=True):
+                context = entrypoint.github_pr_context()
+            self.assertEqual(context['repository'], 'company/demo-shop')
+            self.assertEqual(context['prNumber'], 1847)
+            self.assertEqual(context['headSha'], 'b' * 40)
+
+    def test_protect_mode_rejects_non_pull_request_event(self):
+        with tempfile.TemporaryDirectory() as directory:
+            event = Path(directory) / 'event.json'
+            event.write_text(json.dumps({'repository': {'full_name': 'company/demo-shop'}}))
+            with patch.dict(os.environ, {'GITHUB_EVENT_PATH': str(event)}, clear=True):
+                with self.assertRaisesRegex(ValueError, 'pull_request'):
+                    entrypoint.github_pr_context()
     def test_waits_after_initiation_until_final_result(self):
         client = Client([result('running', False), result()])
         sleeps = []
