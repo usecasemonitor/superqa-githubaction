@@ -172,6 +172,17 @@ class EntrypointTests(unittest.TestCase):
             'Execution failed ::set-output name=x::forged'
         )
         self.assertEqual(len(entrypoint.safe_error_message('x' * 600)), 500)
+        self.assertNotIn('az-secret', entrypoint.safe_error_message('api_key=az-secret'))
+
+    def test_http_error_exposes_sanitized_backend_diagnostic(self):
+        response = types.SimpleNamespace(
+            status_code=409,
+            json=lambda: {'error': 'Project mismatch token=secret-value'}
+        )
+        error = entrypoint.requests.HTTPError('raw response')
+        error.response = response
+        message = entrypoint.safe_exception_message(error)
+        self.assertEqual(message, 'Backend HTTP 409: Project mismatch token=[REDACTED]')
 
 
 if __name__ == '__main__':

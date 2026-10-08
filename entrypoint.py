@@ -43,7 +43,30 @@ def safe_report_url(value):
 
 def safe_error_message(value):
     """Make a backend diagnostic safe for a single GitHub output/log line."""
-    return re.sub(r'[\x00-\x1f\x7f]+', ' ', str(value or '')).strip()[:500]
+    message = re.sub(r'[\x00-\x1f\x7f]+', ' ', str(value or '')).strip()
+    message = re.sub(r'(?i)(authorization\s*[:=]\s*)(bearer\s+)?[^\s,;]+', r'\1[REDACTED]', message)
+    message = re.sub(r'(?i)((?:api[_-]?key|token|password|secret)\s*[:=]\s*)[^\s,;]+', r'\1[REDACTED]', message)
+    message = re.sub(r'(?i)\baz-[a-z0-9._-]+\b', '[REDACTED]', message)
+    return message[:500]
+
+
+def safe_exception_message(error):
+    """Expose actionable HTTP/configuration context without echoing credentials."""
+    response = getattr(error, 'response', None)
+    if response is not None:
+        status = getattr(response, 'status_code', None)
+        detail = ''
+        try:
+            payload = response.json()
+            if isinstance(payload, dict):
+                detail = payload.get('error') or payload.get('message') or ''
+        except (ValueError, TypeError):
+            detail = ''
+        prefix = f'Backend HTTP {status}' if status else 'Backend request failed'
+        return safe_error_message(f'{prefix}: {detail}' if detail else prefix)
+    if isinstance(error, (ValueError, requests.RequestException)):
+        return safe_error_message(error)
+    return 'Unexpected Action error. Review the backend and Action logs.'
 
 
 def publish_result(data):
@@ -276,10 +299,11 @@ def main():
         publish_result({'status': 'failure'})
         print('Execution monitoring interrupted.', flush=True)
         return 1
-    except Exception:
-        # Do not echo server responses, notification content, or credentials.
+    except Exception as error:
+        detail = safe_exception_message(error)
         publish_result({'status': 'failure'})
-        print('Unable to complete execution monitoring. Check backend availability and Action configuration.', flush=True)
+        write_output('error_message', detail)
+        print(f'Unable to complete execution monitoring: {detail}', flush=True)
         return 1
 
 
