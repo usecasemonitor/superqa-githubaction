@@ -81,6 +81,14 @@ def publish_result(data):
     decision = data.get('releaseDecision') or {}
     write_output('release_decision', decision.get('recommendation', ''))
     write_output('confidence_score', decision.get('confidenceScore', ''))
+    write_output('confidence', decision.get('confidenceScore', ''))
+    risk = data.get('riskAssessment') or {}
+    write_output('risk_level', risk.get('level', decision.get('riskLevel', '')))
+    write_output('review_required', str(bool(data.get('reviewRequired', decision.get('reviewRequired', False)))).lower())
+    write_output('tests_executed', counts.get('executed', counts.get('total', 0)))
+    write_output('tests_passed', counts.get('passed', 0))
+    write_output('tests_failed', counts.get('failed', 0))
+    write_output('tests_generated', counts.get('generated', 0))
     if os.environ.get('GITHUB_STEP_SUMMARY'):
         with open(os.environ['GITHUB_STEP_SUMMARY'], 'a', encoding='utf-8') as summary:
             summary.write(f'## SuperQA execution\n\nResult: **{status}**\n\n')
@@ -164,6 +172,14 @@ def run_protect_mode(clock=time.monotonic, sleep=time.sleep):
     write_output('failed_count', counts.get('failed', 0))
     write_output('release_decision', recommendation)
     write_output('confidence_score', decision.get('confidenceScore', ''))
+    write_output('confidence', decision.get('confidenceScore', ''))
+    risk = data.get('riskAssessment') or {}
+    write_output('risk_level', risk.get('level', decision.get('riskLevel', '')))
+    write_output('review_required', str(bool(data.get('reviewRequired', decision.get('reviewRequired', False)))).lower())
+    write_output('tests_executed', counts.get('executed', counts.get('total', 0)))
+    write_output('tests_passed', counts.get('passed', 0))
+    write_output('tests_failed', counts.get('failed', 0))
+    write_output('tests_generated', counts.get('generated', 0))
     if os.environ.get('GITHUB_STEP_SUMMARY'):
         with open(os.environ['GITHUB_STEP_SUMMARY'], 'a', encoding='utf-8') as summary:
             summary.write(f"## SuperQA Protect\n\nPR: **#{data.get('prNumber', '')}**  \n")
@@ -179,7 +195,7 @@ def run_protect_mode(clock=time.monotonic, sleep=time.sleep):
     if result_name == 'execution_error':
         detail = error_message or 'The backend did not provide an error message.'
         print(f'SuperQA Protect execution error: {detail}', flush=True)
-    return 0 if result_name == 'passed' and recommendation in ('', 'SHIP') else 1
+    return 0 if result_name == 'passed' and recommendation in ('', 'PASS', 'SHIP') else 1
 
 
 def poll_result(client, schedule_id, deadline, interval, clock=time.monotonic, sleep=time.sleep):

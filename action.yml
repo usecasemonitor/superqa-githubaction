@@ -105,6 +105,20 @@ outputs:
     description: 'Deterministic Protect recommendation: SHIP, REVIEW, or BLOCK'
   confidence_score:
     description: 'Versioned Protect policy score from 0 to 100'
+  confidence:
+    description: 'Alias for confidence_score'
+  risk_level:
+    description: 'Deterministic Protect operational risk level'
+  review_required:
+    description: 'Whether explicit human risk approval is required'
+  tests_executed:
+    description: 'Number of tests executed'
+  tests_passed:
+    description: 'Number of tests passed'
+  tests_failed:
+    description: 'Number of tests failed'
+  tests_generated:
+    description: 'Number of tests generated for missing coverage'
 
 runs:
   using: 'docker'

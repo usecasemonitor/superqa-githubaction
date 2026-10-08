@@ -162,11 +162,17 @@ class EntrypointTests(unittest.TestCase):
             with patch.dict(os.environ, {'GITHUB_OUTPUT': str(output)}, clear=True):
                 data = result()['data']
                 data['releaseDecision'] = {
-                    'recommendation': 'SHIP', 'confidenceScore': 100, 'policyVersion': '1.0'
+                    'recommendation': 'PASS', 'confidenceScore': 70, 'policyVersion': '2.0',
+                    'riskLevel': 'LOW', 'reviewRequired': False
                 }
+                data['riskAssessment'] = {'level': 'LOW', 'reviewRequired': False}
+                data['counts']['generated'] = 3
                 entrypoint.publish_result(data)
-            self.assertIn('release_decision=SHIP\n', output.read_text())
-            self.assertIn('confidence_score=100\n', output.read_text())
+            self.assertIn('release_decision=PASS\n', output.read_text())
+            self.assertIn('confidence_score=70\n', output.read_text())
+            self.assertIn('risk_level=LOW\n', output.read_text())
+            self.assertIn('review_required=false\n', output.read_text())
+            self.assertIn('tests_generated=3\n', output.read_text())
 
     def test_backend_error_is_safe_for_logs_and_outputs(self):
         self.assertEqual(
