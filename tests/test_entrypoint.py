@@ -45,12 +45,14 @@ class EntrypointTests(unittest.TestCase):
                 'pull_request': {'base': {'ref': 'main', 'sha': 'a' * 40},
                                  'head': {'ref': 'feature/payment', 'sha': 'b' * 40}}}))
             with patch.dict(os.environ, {'GITHUB_EVENT_PATH': str(event), 'GITHUB_RUN_ID': '123',
+                                         'SUPERQA_PROJECT_ID': '507f1f77bcf86cd799439011',
                                          'SUPERQA_PROJECT_NAME': 'Nova SuperQA'}, clear=True):
                 context = entrypoint.github_pr_context()
             self.assertEqual(context['repository'], 'company/demo-shop')
             self.assertEqual(context['prNumber'], 1847)
             self.assertEqual(context['headSha'], 'b' * 40)
             self.assertEqual(context['projectName'], 'Nova SuperQA')
+            self.assertEqual(context['projectId'], '507f1f77bcf86cd799439011')
 
     def test_protect_mode_rejects_non_pull_request_event(self):
         with tempfile.TemporaryDirectory() as directory:

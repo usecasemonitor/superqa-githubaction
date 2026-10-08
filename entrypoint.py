@@ -104,7 +104,9 @@ def github_pr_context():
     if not repository or not isinstance(number, int) or not base.get('sha') or not head.get('sha'):
         raise ValueError('Protect mode requires a pull_request event')
     return {
-        'repository': repository, 'projectName': os.environ.get('SUPERQA_PROJECT_NAME', '').strip(),
+        'repository': repository,
+        'projectId': os.environ.get('SUPERQA_PROJECT_ID', '').strip(),
+        'projectName': os.environ.get('SUPERQA_PROJECT_NAME', '').strip(),
         'prNumber': number,
         'baseBranch': (base.get('ref') or '')[:500], 'headBranch': (head.get('ref') or '')[:500],
         'baseSha': base['sha'], 'headSha': head['sha'],

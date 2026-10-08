@@ -11,6 +11,10 @@ inputs:
     description: 'SuperQA project name'
     required: false
 
+  project_id:
+    description: 'Immutable SuperQA project ID (recommended; project_name remains supported)'
+    required: false
+
   mode:
     description: 'Execution mode: run-plan or protect'
     required: false
@@ -109,6 +113,7 @@ runs:
     SUPERQA_API_KEY: ${{ inputs.api_key }}
     SUPERQA_MODE: ${{ inputs.mode }}
     SUPERQA_PROJECT_NAME: ${{ inputs.project_name }}
+    SUPERQA_PROJECT_ID: ${{ inputs.project_id }}
     SUPERQA_WAIT_FOR_RESULT: ${{ inputs.wait_for_result }}
     SUPERQA_RESULT_TIMEOUT_SECONDS: ${{ inputs.timeout_seconds }}
     SUPERQA_POLL_INTERVAL_SECONDS: ${{ inputs.poll_interval_seconds }}
@@ -126,5 +131,7 @@ runs:
     - ${{ inputs.base_url }}
     - '--project-name'
     - ${{ inputs.project_name }}
+    - '--project-id'
+    - ${{ inputs.project_id }}
     - '--test-plan-name'
     - ${{ inputs.test_plan_name || inputs.test_run_name }}

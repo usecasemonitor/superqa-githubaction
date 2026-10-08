@@ -93,6 +93,9 @@ jobs:
           api_key: ${{ secrets.SUPERQA_API_KEY }}
           project_name: "Nova SuperQA"
           mode: protect
+          wait_for_result: 'true'
+          timeout_seconds: '1800'
+          poll_interval_seconds: '5'
 ```
 
 The Action reads PR metadata from GitHub's event file. The backend retrieves
