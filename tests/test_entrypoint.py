@@ -44,11 +44,13 @@ class EntrypointTests(unittest.TestCase):
             event.write_text(json.dumps({'number': 1847, 'repository': {'full_name': 'company/demo-shop'},
                 'pull_request': {'base': {'ref': 'main', 'sha': 'a' * 40},
                                  'head': {'ref': 'feature/payment', 'sha': 'b' * 40}}}))
-            with patch.dict(os.environ, {'GITHUB_EVENT_PATH': str(event), 'GITHUB_RUN_ID': '123'}, clear=True):
+            with patch.dict(os.environ, {'GITHUB_EVENT_PATH': str(event), 'GITHUB_RUN_ID': '123',
+                                         'SUPERQA_PROJECT_NAME': 'Nova SuperQA'}, clear=True):
                 context = entrypoint.github_pr_context()
             self.assertEqual(context['repository'], 'company/demo-shop')
             self.assertEqual(context['prNumber'], 1847)
             self.assertEqual(context['headSha'], 'b' * 40)
+            self.assertEqual(context['projectName'], 'Nova SuperQA')
 
     def test_protect_mode_rejects_non_pull_request_event(self):
         with tempfile.TemporaryDirectory() as directory:
@@ -151,6 +153,18 @@ class EntrypointTests(unittest.TestCase):
                 with self.assertRaises(ValueError):
                     entrypoint.write_output('test_result', 'passed\nforged=true')
                 self.assertEqual(entrypoint.safe_report_url('javascript:alert(1)'), '')
+
+    def test_release_decision_outputs_are_published(self):
+        with tempfile.TemporaryDirectory() as directory:
+            output = Path(directory) / 'output'
+            with patch.dict(os.environ, {'GITHUB_OUTPUT': str(output)}, clear=True):
+                data = result()['data']
+                data['releaseDecision'] = {
+                    'recommendation': 'SHIP', 'confidenceScore': 100, 'policyVersion': '1.0'
+                }
+                entrypoint.publish_result(data)
+            self.assertIn('release_decision=SHIP\n', output.read_text())
+            self.assertIn('confidence_score=100\n', output.read_text())
 
     def test_backend_error_is_safe_for_logs_and_outputs(self):
         self.assertEqual(

@@ -91,6 +91,7 @@ jobs:
         uses: superqa-ai/superqa-githubaction@v1
         with:
           api_key: ${{ secrets.SUPERQA_API_KEY }}
+          project_name: "Nova SuperQA"
           mode: protect
 ```
 
@@ -107,6 +108,8 @@ before an execution history was created.
 | Output | Description |
 |--------|-------------|
 | `test_result` | Protect result (`passed`, `failed`, `review_required`, or `execution_error`) |
+| `release_decision` | Deterministic release recommendation (`SHIP`, `REVIEW`, or `BLOCK`) |
+| `confidence_score` | Versioned deterministic release-policy score from 0 to 100 |
 | `error_message` | Backend diagnostic for a Protect execution error |
 | `report_url` | Execution report URL, when an execution history exists |
 

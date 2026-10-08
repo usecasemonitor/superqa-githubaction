@@ -97,6 +97,10 @@ outputs:
     description: 'Failed tests (protect mode)'
   error_message:
     description: 'Sanitized backend diagnostic when Protect cannot start or complete execution'
+  release_decision:
+    description: 'Deterministic Protect recommendation: SHIP, REVIEW, or BLOCK'
+  confidence_score:
+    description: 'Versioned Protect policy score from 0 to 100'
 
 runs:
   using: 'docker'
@@ -104,6 +108,7 @@ runs:
   env:
     SUPERQA_API_KEY: ${{ inputs.api_key }}
     SUPERQA_MODE: ${{ inputs.mode }}
+    SUPERQA_PROJECT_NAME: ${{ inputs.project_name }}
     SUPERQA_WAIT_FOR_RESULT: ${{ inputs.wait_for_result }}
     SUPERQA_RESULT_TIMEOUT_SECONDS: ${{ inputs.timeout_seconds }}
     SUPERQA_POLL_INTERVAL_SECONDS: ${{ inputs.poll_interval_seconds }}

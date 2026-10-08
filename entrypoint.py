@@ -55,6 +55,9 @@ def publish_result(data):
     write_output('report_url', report_url)
     write_output('passed_count', counts.get('passed', 0))
     write_output('failed_count', counts.get('failed', 0))
+    decision = data.get('releaseDecision') or {}
+    write_output('release_decision', decision.get('recommendation', ''))
+    write_output('confidence_score', decision.get('confidenceScore', ''))
     if os.environ.get('GITHUB_STEP_SUMMARY'):
         with open(os.environ['GITHUB_STEP_SUMMARY'], 'a', encoding='utf-8') as summary:
             summary.write(f'## SuperQA execution\n\nResult: **{status}**\n\n')
@@ -78,7 +81,8 @@ def github_pr_context():
     if not repository or not isinstance(number, int) or not base.get('sha') or not head.get('sha'):
         raise ValueError('Protect mode requires a pull_request event')
     return {
-        'repository': repository, 'prNumber': number,
+        'repository': repository, 'projectName': os.environ.get('SUPERQA_PROJECT_NAME', '').strip(),
+        'prNumber': number,
         'baseBranch': (base.get('ref') or '')[:500], 'headBranch': (head.get('ref') or '')[:500],
         'baseSha': base['sha'], 'headSha': head['sha'],
         'workflowRunId': os.environ.get('GITHUB_RUN_ID', '')
@@ -122,6 +126,8 @@ def run_protect_mode(clock=time.monotonic, sleep=time.sleep):
     counts = data.get('counts') or {}
     result_name = data.get('result') or 'execution_error'
     error_message = safe_error_message(data.get('error'))
+    decision = data.get('releaseDecision') or {}
+    recommendation = decision.get('recommendation') or ''
     write_output('test_result', result_name)
     write_output('error_message', error_message)
     write_output('test_run_id', data.get('testRunId'))
@@ -131,10 +137,15 @@ def run_protect_mode(clock=time.monotonic, sleep=time.sleep):
     write_output('failed_tests', counts.get('failed', 0))
     write_output('passed_count', counts.get('passed', 0))
     write_output('failed_count', counts.get('failed', 0))
+    write_output('release_decision', recommendation)
+    write_output('confidence_score', decision.get('confidenceScore', ''))
     if os.environ.get('GITHUB_STEP_SUMMARY'):
         with open(os.environ['GITHUB_STEP_SUMMARY'], 'a', encoding='utf-8') as summary:
             summary.write(f"## SuperQA Protect\n\nPR: **#{data.get('prNumber', '')}**  \n")
-            summary.write(f"Commit: `{str(data.get('commitSha', ''))[:12]}`  \nResult: **{result_name}**\n\n")
+            summary.write(f"Commit: `{str(data.get('commitSha', ''))[:12]}`  \nResult: **{result_name}**\n")
+            if recommendation:
+                summary.write(f"Release decision: **{safe_error_message(recommendation)}**  \n")
+                summary.write(f"Policy: `{safe_error_message(decision.get('policyVersion', ''))}`; confidence: **{decision.get('confidenceScore', '')}**\n\n")
             features = ', '.join(data.get('affectedFeatures') or []) or 'Review required'
             summary.write(f"Affected features: {features}\n\nPassed: {counts.get('passed', 0)}; failed: {counts.get('failed', 0)}.\n\n")
             report_url = safe_report_url(data.get('reportUrl'))
@@ -143,7 +154,7 @@ def run_protect_mode(clock=time.monotonic, sleep=time.sleep):
     if result_name == 'execution_error':
         detail = error_message or 'The backend did not provide an error message.'
         print(f'SuperQA Protect execution error: {detail}', flush=True)
-    return 0 if result_name == 'passed' else 1
+    return 0 if result_name == 'passed' and recommendation in ('', 'SHIP') else 1
 
 
 def poll_result(client, schedule_id, deadline, interval, clock=time.monotonic, sleep=time.sleep):
