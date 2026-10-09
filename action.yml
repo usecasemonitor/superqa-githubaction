@@ -93,6 +93,8 @@ outputs:
     description: 'Failed test cases (wait mode)'
   protect_run_id:
     description: 'Protect run ID (protect mode)'
+  protect_outcome:
+    description: 'Structured Protect outcome, including NO_MATCHING_TESTS'
   test_run_id:
     description: 'Execution history ID (protect mode)'
   passed_tests:
@@ -118,7 +120,7 @@ outputs:
   tests_failed:
     description: 'Number of tests failed'
   tests_generated:
-    description: 'Number of tests generated for missing coverage'
+    description: 'Deprecated Protect generation count; always zero in existing-coverage-only mode'
 
 runs:
   using: 'docker'

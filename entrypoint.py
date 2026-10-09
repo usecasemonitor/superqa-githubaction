@@ -189,6 +189,7 @@ def run_protect_mode(clock=time.monotonic, sleep=time.sleep):
     decision = data.get('releaseDecision') or {}
     recommendation = decision.get('recommendation') or ''
     write_output('test_result', result_name)
+    write_output('protect_outcome', data.get('outcomeCode') or result_name.upper())
     write_output('error_message', error_message)
     write_output('test_run_id', data.get('testRunId'))
     write_output('run_history_id', data.get('testRunId'))
