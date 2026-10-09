@@ -69,6 +69,28 @@ def safe_exception_message(error):
     return 'Unexpected Action error. Review the backend and Action logs.'
 
 
+def protect_blocking_reasons(data):
+    """Return safe diagnostics without allowing report payload shape to fail the Action."""
+    if not isinstance(data, dict):
+        return []
+    reasons = []
+    gaps = data.get('coverageGaps')
+    if isinstance(gaps, list):
+        reasons.extend(gaps)
+    decision = data.get('releaseDecision')
+    if isinstance(decision, dict) and isinstance(decision.get('reasons'), list):
+        reasons.extend(decision['reasons'])
+    resolution = data.get('testDataResolution')
+    blocked_items = resolution.get('blockedReasons') if isinstance(resolution, dict) else []
+    if isinstance(blocked_items, list):
+        for blocked in blocked_items:
+            if isinstance(blocked, dict) and isinstance(blocked.get('reasons'), list):
+                reasons.extend(blocked['reasons'])
+            elif isinstance(blocked, str):
+                reasons.append(blocked)
+    return list(dict.fromkeys(safe_error_message(reason) for reason in reasons if reason))[:10]
+
+
 def publish_result(data):
     status = data['status']
     counts = data.get('counts') or {}
@@ -89,13 +111,7 @@ def publish_result(data):
     write_output('tests_passed', counts.get('passed', 0))
     write_output('tests_failed', counts.get('failed', 0))
     write_output('tests_generated', counts.get('generated', 0))
-    resolution = data.get('testDataResolution') or {}
-    blocking_reasons = list(data.get('coverageGaps') or [])
-    blocking_reasons.extend(decision.get('reasons') or [])
-    for blocked in resolution.get('blockedReasons') or []:
-        blocking_reasons.extend(blocked.get('reasons') or [])
-    blocking_reasons = list(dict.fromkeys(
-        safe_error_message(reason) for reason in blocking_reasons if reason))[:10]
+    blocking_reasons = protect_blocking_reasons(data)
     if blocking_reasons:
         print(f"SuperQA Protect blocked: {'; '.join(blocking_reasons)}", flush=True)
     if os.environ.get('GITHUB_STEP_SUMMARY'):

@@ -38,6 +38,17 @@ class Client:
 
 
 class EntrypointTests(unittest.TestCase):
+    def test_protect_blocking_reasons_tolerates_mixed_payload_shapes(self):
+        reasons = entrypoint.protect_blocking_reasons({
+            'coverageGaps': ['checkout'],
+            'releaseDecision': {'reasons': ['Required coverage could not be verified.']},
+            'testDataResolution': {'blockedReasons': [
+                {'reasons': ['test case has no steps']}, 'legacy reason', None
+            ]}
+        })
+        self.assertEqual(reasons, ['checkout', 'Required coverage could not be verified.',
+                                   'test case has no steps', 'legacy reason'])
+
     def test_collects_pull_request_context_from_github_event(self):
         with tempfile.TemporaryDirectory() as directory:
             event = Path(directory) / 'event.json'
