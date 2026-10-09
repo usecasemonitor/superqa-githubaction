@@ -9,7 +9,16 @@ inputs:
 
   project_name:
     description: 'SuperQA project name'
-    required: true
+    required: false
+
+  project_id:
+    description: 'Immutable SuperQA project ID (recommended; project_name remains supported)'
+    required: false
+
+  mode:
+    description: 'Execution mode: run-plan or protect'
+    required: false
+    default: 'run-plan'
 
   test_plan_name:
     description: 'Test plan name'
@@ -78,16 +87,53 @@ outputs:
     description: 'Exact execution history ID (wait mode)'
   report_url:
     description: 'Detailed SuperQA execution report URL (wait mode)'
+  test_results_url:
+    description: 'Executed release-run test results URL (Protect mode)'
   passed_count:
     description: 'Passed test cases (wait mode)'
   failed_count:
     description: 'Failed test cases (wait mode)'
+  protect_run_id:
+    description: 'Protect run ID (protect mode)'
+  protect_outcome:
+    description: 'Structured Protect outcome, including NO_MATCHING_TESTS'
+  protect_implementation_version:
+    description: 'Backend Protect implementation version used for this run'
+  test_run_id:
+    description: 'Execution history ID (protect mode)'
+  passed_tests:
+    description: 'Passed tests (protect mode)'
+  failed_tests:
+    description: 'Failed tests (protect mode)'
+  error_message:
+    description: 'Sanitized backend diagnostic when Protect cannot start or complete execution'
+  release_decision:
+    description: 'Deterministic Protect recommendation: SHIP, REVIEW, or BLOCK'
+  confidence_score:
+    description: 'Versioned Protect policy score from 0 to 100'
+  confidence:
+    description: 'Alias for confidence_score'
+  risk_level:
+    description: 'Deterministic Protect operational risk level'
+  review_required:
+    description: 'Whether explicit human risk approval is required'
+  tests_executed:
+    description: 'Number of tests executed'
+  tests_passed:
+    description: 'Number of tests passed'
+  tests_failed:
+    description: 'Number of tests failed'
+  tests_generated:
+    description: 'Deprecated Protect generation count; always zero in existing-coverage-only mode'
 
 runs:
   using: 'docker'
   image: 'Dockerfile'
   env:
     SUPERQA_API_KEY: ${{ inputs.api_key }}
+    SUPERQA_MODE: ${{ inputs.mode }}
+    SUPERQA_PROJECT_NAME: ${{ inputs.project_name }}
+    SUPERQA_PROJECT_ID: ${{ inputs.project_id }}
     SUPERQA_WAIT_FOR_RESULT: ${{ inputs.wait_for_result }}
     SUPERQA_RESULT_TIMEOUT_SECONDS: ${{ inputs.timeout_seconds }}
     SUPERQA_POLL_INTERVAL_SECONDS: ${{ inputs.poll_interval_seconds }}
@@ -97,6 +143,7 @@ runs:
     SUPERQA_NOTIFICATION_EMAILS: ${{ inputs.notification_emails }}
     SUPERQA_NOTIFY_ON_SUCCESS: ${{ inputs.notify_on_success }}
     SUPERQA_SKIP_NOTIFICATIONS: ${{ inputs.skip_notifications }}
+    SUPERQA_BASE_URL: ${{ inputs.base_url }}
   args:
     - '-m'
     - 'superqa.cli'
@@ -104,5 +151,7 @@ runs:
     - ${{ inputs.base_url }}
     - '--project-name'
     - ${{ inputs.project_name }}
+    - '--project-id'
+    - ${{ inputs.project_id }}
     - '--test-plan-name'
     - ${{ inputs.test_plan_name || inputs.test_run_name }}
