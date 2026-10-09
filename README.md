@@ -95,7 +95,7 @@ jobs:
           timeout_seconds: '1800'
 ```
 
-The Action reads pull-request metadata from GitHub's event file. SuperQA uses the repository-scoped connection configured for the project, so the workflow does not need to check out source code or pass a GitHub token to this Action.
+The Action reads pull-request metadata from GitHub's event file. SuperQA uses the repository-scoped connection configured for the project, so the workflow does not need to check out source code or pass a GitHub token to this Action. When no existing test covers a verified PR impact, SuperQA automatically derives the affected feature from the PR and project knowledge, skips cases that need test data or typed user input, generates autonomous alternatives, and runs validated low- or medium-risk cases. High-risk actions remain blocked or require review.
 
 ## Outputs
 
@@ -118,7 +118,7 @@ The Action reads pull-request metadata from GitHub's event file. SuperQA uses th
 | `review_required` | Whether manual review is required |
 | `tests_executed` | Number of tests executed |
 | `tests_passed` / `tests_failed` | Detailed result counts |
-| `tests_generated` | Deprecated compatibility output; always zero in current Protect mode |
+| `tests_generated` | Number of test cases generated automatically for uncovered Protect impact |
 | `test_results_url` | Protect test-results URL, when available |
 | `error_message` | Sanitized diagnostic when execution fails |
 

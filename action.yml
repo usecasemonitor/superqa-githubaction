@@ -124,7 +124,7 @@ outputs:
   tests_failed:
     description: 'Number of tests failed'
   tests_generated:
-    description: 'Deprecated Protect generation count; always zero in existing-coverage-only mode'
+    description: 'Number of test cases generated automatically for uncovered Protect impact'
 
 runs:
   using: 'docker'
