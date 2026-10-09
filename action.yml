@@ -95,6 +95,8 @@ outputs:
     description: 'Protect run ID (protect mode)'
   protect_outcome:
     description: 'Structured Protect outcome, including NO_MATCHING_TESTS'
+  protect_implementation_version:
+    description: 'Backend Protect implementation version used for this run'
   test_run_id:
     description: 'Execution history ID (protect mode)'
   passed_tests:
