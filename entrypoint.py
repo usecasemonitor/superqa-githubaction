@@ -111,6 +111,8 @@ def github_pr_context():
     head = pull_request.get('head') or {}
     if not repository or not isinstance(number, int) or not base.get('sha') or not head.get('sha'):
         raise ValueError('Protect mode requires a pull_request event')
+    workflow_run_id = os.environ.get('GITHUB_RUN_ID', '')
+    workflow_attempt = os.environ.get('GITHUB_RUN_ATTEMPT', '1')
     return {
         'repository': repository,
         'projectId': os.environ.get('SUPERQA_PROJECT_ID', '').strip(),
@@ -118,7 +120,7 @@ def github_pr_context():
         'prNumber': number,
         'baseBranch': (base.get('ref') or '')[:500], 'headBranch': (head.get('ref') or '')[:500],
         'baseSha': base['sha'], 'headSha': head['sha'],
-        'workflowRunId': os.environ.get('GITHUB_RUN_ID', '')
+        'workflowRunId': f'{workflow_run_id}:{workflow_attempt}' if workflow_run_id else ''
     }
 
 
