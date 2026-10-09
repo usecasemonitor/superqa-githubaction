@@ -195,6 +195,7 @@ def run_protect_mode(clock=time.monotonic, sleep=time.sleep):
     write_output('test_run_id', data.get('testRunId'))
     write_output('run_history_id', data.get('testRunId'))
     write_output('report_url', safe_report_url(data.get('reportUrl')))
+    write_output('test_results_url', safe_report_url(data.get('testResultsUrl')))
     write_output('passed_tests', counts.get('passed', 0))
     write_output('failed_tests', counts.get('failed', 0))
     write_output('passed_count', counts.get('passed', 0))
@@ -225,7 +226,10 @@ def run_protect_mode(clock=time.monotonic, sleep=time.sleep):
                 summary.write('Blocking reasons:\n' + ''.join(f'- {reason}\n' for reason in blocking_reasons) + '\n')
             report_url = safe_report_url(data.get('reportUrl'))
             if report_url:
-                summary.write(f'[View SuperQA release report]({report_url})\n')
+                summary.write(f'[View release confidence report]({report_url})\n')
+            test_results_url = safe_report_url(data.get('testResultsUrl'))
+            if test_results_url:
+                summary.write(f'  \n[View test results]({test_results_url})\n')
     if result_name == 'execution_error':
         detail = error_message or 'The backend did not provide an error message.'
         print(f'SuperQA Protect execution error: {detail}', flush=True)

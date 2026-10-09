@@ -87,6 +87,8 @@ outputs:
     description: 'Exact execution history ID (wait mode)'
   report_url:
     description: 'Detailed SuperQA execution report URL (wait mode)'
+  test_results_url:
+    description: 'Executed release-run test results URL (Protect mode)'
   passed_count:
     description: 'Passed test cases (wait mode)'
   failed_count:
