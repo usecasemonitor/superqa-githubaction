@@ -89,6 +89,15 @@ def publish_result(data):
     write_output('tests_passed', counts.get('passed', 0))
     write_output('tests_failed', counts.get('failed', 0))
     write_output('tests_generated', counts.get('generated', 0))
+    resolution = data.get('testDataResolution') or {}
+    blocking_reasons = list(data.get('coverageGaps') or [])
+    blocking_reasons.extend(decision.get('reasons') or [])
+    for blocked in resolution.get('blockedReasons') or []:
+        blocking_reasons.extend(blocked.get('reasons') or [])
+    blocking_reasons = list(dict.fromkeys(
+        safe_error_message(reason) for reason in blocking_reasons if reason))[:10]
+    if blocking_reasons:
+        print(f"SuperQA Protect blocked: {'; '.join(blocking_reasons)}", flush=True)
     if os.environ.get('GITHUB_STEP_SUMMARY'):
         with open(os.environ['GITHUB_STEP_SUMMARY'], 'a', encoding='utf-8') as summary:
             summary.write(f'## SuperQA execution\n\nResult: **{status}**\n\n')
@@ -191,6 +200,8 @@ def run_protect_mode(clock=time.monotonic, sleep=time.sleep):
                 summary.write(f"Policy: `{safe_error_message(decision.get('policyVersion', ''))}`; confidence: **{decision.get('confidenceScore', '')}**\n\n")
             features = ', '.join(data.get('affectedFeatures') or []) or 'Review required'
             summary.write(f"Affected features: {features}\n\nPassed: {counts.get('passed', 0)}; failed: {counts.get('failed', 0)}.\n\n")
+            if blocking_reasons:
+                summary.write('Blocking reasons:\n' + ''.join(f'- {reason}\n' for reason in blocking_reasons) + '\n')
             report_url = safe_report_url(data.get('reportUrl'))
             if report_url:
                 summary.write(f'[View SuperQA release report]({report_url})\n')
