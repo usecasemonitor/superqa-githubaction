@@ -49,6 +49,35 @@ class EntrypointTests(unittest.TestCase):
         self.assertEqual(reasons, ['checkout', 'Required coverage could not be verified.',
                                    'test case has no steps', 'legacy reason'])
 
+    def test_protect_mode_writes_blocking_reasons_to_step_summary(self):
+        with tempfile.TemporaryDirectory() as directory:
+            event = Path(directory) / 'event.json'
+            output = Path(directory) / 'output'
+            summary = Path(directory) / 'summary'
+            event.write_text(json.dumps({'number': 12, 'repository': {'full_name': 'company/shop'},
+                'pull_request': {'base': {'ref': 'main', 'sha': 'a' * 40},
+                                 'head': {'ref': 'feature/login', 'sha': 'b' * 40}}}))
+            terminal = {'success': True, 'data': {
+                'protectRunId': 'c' * 24, 'commitSha': 'b' * 40, 'prNumber': 12,
+                'terminal': True, 'status': 'completed', 'result': 'incomplete',
+                'counts': {}, 'coverageGaps': ['Login'],
+                'releaseDecision': {'recommendation': 'BLOCK', 'reasons': ['Coverage missing']}
+            }}
+            response = types.SimpleNamespace(raise_for_status=lambda: None,
+                                             json=lambda: {'success': True, 'data': {'protectRunId': 'c' * 24}})
+            result_response = types.SimpleNamespace(raise_for_status=lambda: None,
+                                                    json=lambda: terminal)
+            with patch.dict(os.environ, {
+                'GITHUB_EVENT_PATH': str(event), 'GITHUB_OUTPUT': str(output),
+                'GITHUB_STEP_SUMMARY': str(summary), 'GITHUB_RUN_ID': '123',
+                'SUPERQA_API_KEY': 'az-unit-test', 'SUPERQA_RESULT_TIMEOUT_SECONDS': '30',
+                'SUPERQA_POLL_INTERVAL_SECONDS': '1'
+            }, clear=True), patch.object(entrypoint.requests, 'post', return_value=response), \
+                    patch.object(entrypoint.requests, 'get', return_value=result_response):
+                self.assertEqual(entrypoint.run_protect_mode(clock=lambda: 0), 1)
+            self.assertIn('Blocking reasons:', summary.read_text())
+            self.assertIn('Login', summary.read_text())
+
     def test_collects_pull_request_context_from_github_event(self):
         with tempfile.TemporaryDirectory() as directory:
             event = Path(directory) / 'event.json'

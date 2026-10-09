@@ -64,9 +64,8 @@ def safe_exception_message(error):
             detail = ''
         prefix = f'Backend HTTP {status}' if status else 'Backend request failed'
         return safe_error_message(f'{prefix}: {detail}' if detail else prefix)
-    if isinstance(error, (ValueError, requests.RequestException)):
-        return safe_error_message(error)
-    return 'Unexpected Action error. Review the backend and Action logs.'
+    detail = safe_error_message(error)
+    return detail or f'{type(error).__name__} while processing the Action result.'
 
 
 def protect_blocking_reasons(data):
@@ -208,6 +207,9 @@ def run_protect_mode(clock=time.monotonic, sleep=time.sleep):
     write_output('tests_passed', counts.get('passed', 0))
     write_output('tests_failed', counts.get('failed', 0))
     write_output('tests_generated', counts.get('generated', 0))
+    blocking_reasons = protect_blocking_reasons(data)
+    if blocking_reasons:
+        print(f"SuperQA Protect blocked: {'; '.join(blocking_reasons)}", flush=True)
     if os.environ.get('GITHUB_STEP_SUMMARY'):
         with open(os.environ['GITHUB_STEP_SUMMARY'], 'a', encoding='utf-8') as summary:
             summary.write(f"## SuperQA Protect\n\nPR: **#{data.get('prNumber', '')}**  \n")
