@@ -120,7 +120,7 @@ This mode calls SuperQA's `/api/security/static_scan` entry point. SuperQA sends
 | `test_result` | Final or initiation status, depending on mode |
 | `schedule_id` | Immediate-execution schedule ID |
 | `run_history_id` | Final execution history ID |
-| `report_url` | Validated HTTPS execution-report URL |
+| `report_url` | Validated HTTPS execution, Protect, or security-report URL |
 | `passed_count` / `failed_count` | Final test counts |
 | `protect_run_id` | Protect run ID |
 | `protect_outcome` | Structured Protect outcome code |
@@ -140,6 +140,7 @@ This mode calls SuperQA's `/api/security/static_scan` entry point. SuperQA sends
 | `security_scan_id` | Persisted pull-request security scan ID |
 | `security_status` | Final pull-request security scan status |
 | `security_findings` | Total findings introduced by the pull request |
+| `security_report_url` | Completed pull-request security report URL |
 
 ## Use outputs
 
