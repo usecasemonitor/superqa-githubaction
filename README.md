@@ -128,6 +128,7 @@ This mode calls SuperQA's `/api/security/static_scan` entry point. SuperQA sends
 | `test_run_id` | Protect execution history ID |
 | `passed_tests` / `failed_tests` | Protect test counts |
 | `release_decision` | `SHIP`, `REVIEW`, or `BLOCK` |
+| `release_reasons` | Semicolon-separated reasons for the Protect release decision |
 | `confidence_score` | Release-policy confidence score from 0 to 100 |
 | `confidence` | Alias for `confidence_score` |
 | `risk_level` | Reported release risk level |

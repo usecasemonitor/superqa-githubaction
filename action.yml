@@ -109,6 +109,8 @@ outputs:
     description: 'Sanitized backend diagnostic when Protect cannot start or complete execution'
   release_decision:
     description: 'Deterministic Protect recommendation: SHIP, REVIEW, or BLOCK'
+  release_reasons:
+    description: 'Semicolon-separated reasons for the Protect release decision'
   confidence_score:
     description: 'Versioned Protect policy score from 0 to 100'
   confidence:
