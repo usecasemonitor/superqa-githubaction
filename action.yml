@@ -16,7 +16,7 @@ inputs:
     required: false
 
   mode:
-    description: 'Execution mode: run-plan or protect'
+    description: 'Execution mode: run-plan, protect, or security-scan'
     required: false
     default: 'run-plan'
 
@@ -131,6 +131,12 @@ outputs:
     description: 'Number of functional coverage gaps remaining after matching and validation'
   generation_outcome:
     description: 'NEW_TESTS_GENERATED, NO_NEW_TESTS_REQUIRED, or COVERAGE_GAPS_REPORTED'
+  security_scan_id:
+    description: 'Persisted pull-request security scan ID'
+  security_status:
+    description: 'Pull-request security scan status'
+  security_findings:
+    description: 'Total findings introduced by the pull request'
 
 runs:
   using: 'docker'

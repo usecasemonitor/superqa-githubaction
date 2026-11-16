@@ -14,7 +14,7 @@ Run SuperQA test plans and pull-request protection checks in GitHub Actions.
 | Input | Required | Default | Description |
 |---|---:|---|---|
 | `api_key` | Yes | — | SuperQA API key, supplied through a GitHub secret |
-| `mode` | No | `run-plan` | `run-plan` or `protect` |
+| `mode` | No | `run-plan` | `run-plan`, `protect`, or `security-scan` |
 | `project_name` | No | — | Project name; `project_id` is preferred when available |
 | `project_id` | No | — | Immutable SuperQA project ID |
 | `test_plan_name` | No | — | Test plan name for `run-plan` mode |
@@ -97,6 +97,22 @@ jobs:
 
 The Action reads pull-request metadata from GitHub's event file. SuperQA uses the repository-scoped connection configured for the project, so the workflow does not need to check out source code or pass a GitHub token to this Action. When no existing test covers a verified PR impact, SuperQA automatically derives the affected feature from the PR and project knowledge, skips cases that need test data or typed user input, generates autonomous alternatives, and runs validated low- or medium-risk cases. High-risk actions remain blocked or require review.
 
+## Scan pull-request changes
+
+Use `security-scan` to run diff-scoped static security checks for a pull request. The result is saved to the selected project's Repository Security history in SuperQA.
+
+```yaml
+- name: Scan pull-request security
+  uses: superqa-ai/superqa-githubaction@v1
+  with:
+    api_key: ${{ secrets.SUPERQA_API_KEY }}
+    project_id: ${{ vars.SUPERQA_PROJECT_ID }}
+    mode: security-scan
+    wait_for_result: 'true'
+```
+
+This mode calls SuperQA's `/api/security/static_scan` entry point. SuperQA sends only the pull-request diff and relevant base/head manifests to the static scanner; manual scans from the UI continue to use the full-repository `repo_scan` flow.
+
 ## Outputs
 
 | Output | Description |
@@ -121,6 +137,9 @@ The Action reads pull-request metadata from GitHub's event file. SuperQA uses th
 | `tests_generated` | Number of test cases generated automatically for uncovered Protect impact |
 | `test_results_url` | Protect test-results URL, when available |
 | `error_message` | Sanitized diagnostic when execution fails |
+| `security_scan_id` | Persisted pull-request security scan ID |
+| `security_status` | Final pull-request security scan status |
+| `security_findings` | Total findings introduced by the pull request |
 
 ## Use outputs
 
