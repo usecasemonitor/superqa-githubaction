@@ -99,7 +99,7 @@ The Action reads pull-request metadata from GitHub's event file. SuperQA uses th
 
 ## Scan pull-request changes
 
-Use `security-scan` to run diff-scoped static security checks for a pull request. The result is saved to the selected project's Repository Security history in SuperQA.
+Use `security-scan` to run static security checks against the pull request's complete HEAD revision. The result is saved to the selected project's Repository Security history in SuperQA.
 
 ```yaml
 - name: Scan pull-request security
@@ -111,7 +111,7 @@ Use `security-scan` to run diff-scoped static security checks for a pull request
     wait_for_result: 'true'
 ```
 
-This mode calls SuperQA's `/api/security/static_scan` entry point. SuperQA sends only the pull-request diff and relevant base/head manifests to the static scanner; manual scans from the UI continue to use the full-repository `repo_scan` flow.
+This mode calls SuperQA's PR-specific `/api/security/static_scan` entry point. The backend scans the complete pull-request HEAD branch through the repository scanner, verifies the returned commit SHA, and stores the result against the PR. Existing findings therefore remain visible on every new or reopened PR.
 
 ## Outputs
 
